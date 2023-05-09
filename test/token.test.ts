@@ -1,66 +1,71 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { BlockchairsToken } from "../typechain-types/contracts";
+import {
+  MMNALaunchToken__factory,
+  USDT__factory,
+} from "../typechain-types/factories/contracts";
+import { MMNALaunchToken } from "../typechain-types/contracts/MMNALaunchToken";
+import { USDT } from "../typechain-types/contracts/USDT";
 
-describe("Blockchairs investments tests", () => {
+describe("Tests", () => {
   const deploy = async () => {
     const [
       deployer,
       user1,
       user2,
       user3,
-      user4,
-      user5,
-      user6,
-      user7,
-      user8,
-      user9,
-      user10,
-      user11,
-      user12,
-      user13,
+      team,
+      airdrops,
+      influencers,
+      marketing,
     ] = await ethers.getSigners();
 
-    const BlockchairsTokenFactory = await ethers.getContractFactory(
-      "BlockchairsToken"
-    );
+    const usdtFactory = (await ethers.getContractFactory(
+      "USDT"
+    )) as USDT__factory;
+    const usdt: USDT = await usdtFactory.deploy();
+    await usdt.deployed();
 
-    const token: BlockchairsToken = await BlockchairsTokenFactory.deploy();
+    const tokenFactory = (await ethers.getContractFactory(
+      "MMNALaunchToken"
+    )) as MMNALaunchToken__factory;
+
+    const token: MMNALaunchToken = await tokenFactory.deploy(
+      team.address,
+      airdrops.address,
+      influencers.address,
+      marketing.address,
+      usdt.address
+    );
     await token.deployed();
 
+    const crowdsale = await token.crowdsale();
+
     return {
+      usdt,
       token,
+      crowdsale,
       deployer,
-      users: [
-        user1,
-        user2,
-        user3,
-        user4,
-        user5,
-        user6,
-        user7,
-        user8,
-        user9,
-        user10,
-        user11,
-        user12,
-        user13,
-      ],
+      users: [user1, user2, user3, team, airdrops, influencers, marketing],
     };
   };
 
   it("All deployed correctly and start settings is right", async () => {
-    const { deployer, token } = await loadFixture(deploy);
-    expect(await token.balanceOf(deployer.address)).to.equal(100000);
+    const { deployer, token, crowdsale } = await loadFixture(deploy);
+
+    expect(await token.maxTotalSupply()).eq(
+      ethers.utils.parseEther("88888888888")
+    );
+    /*expect(await token.balanceOf(deployer.address)).to.equal(100000);
     expect(await token.tokenPrice()).to.equal(
       ethers.utils.parseEther("0.00001")
     );
     expect(await token.nextComputeRewardsDate()).to.equal(
       (await time.latest()) + 31 * 24 * 60 * 60
-    );
+    );*/
   });
-  it("Buy tokens and get payout", async () => {
+  /*it("Buy tokens and get payout", async () => {
     const { deployer, token, users } = await loadFixture(deploy);
 
     const txBuy = await token
@@ -70,7 +75,7 @@ describe("Blockchairs investments tests", () => {
 
     const tokensBalance = await token.balanceOf(users[0].address);
     expect(tokensBalance).to.equal(100000);
-    console.log({tokensBalance})
+    console.log({ tokensBalance });
 
     const transactionHash = await users[10].sendTransaction({
       to: token.address,
@@ -90,7 +95,7 @@ describe("Blockchairs investments tests", () => {
     console.log({ balance });
     const totalSupply = await token.totalSupply();
     console.log({ totalSupply });
-    console.log(balance.div(totalSupply))
+    console.log(balance.div(totalSupply));
   });
   it("Compute rewards", async () => {
     const { deployer, token, users } = await loadFixture(deploy);
@@ -101,8 +106,5 @@ describe("Blockchairs investments tests", () => {
     await time.increaseTo(currentTime + 31 * 24 * 60 * 60 + 1);
     const txComputeRewards = await token.connect(users[0]).computeRewards();
     await txComputeRewards.wait();
-    /*expect(await token.nextComputeRewardsDate()).to.equal(
-      (await time.latest()) + 90 * 24 * 60 * 60 +2
-    );*/
-  });
+  });*/
 });

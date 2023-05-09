@@ -7,24 +7,27 @@ import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Crowdsale} from "./Crowdsale.sol";
 
-contract MMNALaunch is ERC20, Pausable, Ownable {
+//import "hardhat/console.sol";
+
+contract MMNALaunchToken is ERC20, Pausable, Ownable {
     uint256 public immutable maxTotalSupply;
     Crowdsale public crowdsale;
 
     constructor(
-        address _team,
-        address _airdrops,
-        address _influencers,
-        address _marketing,
-        address _usdt
+        address team,
+        address airdrops,
+        address influencers,
+        address marketing,
+        address usdt
     ) ERC20("MMNA Launch", "MMNA") {
         maxTotalSupply = 88_888_888_888 * 10 ** decimals();
-        _mint(_team, 9_777_777_778 * 10 ** decimals());
-        _mint(_airdrops, 977_777_778 * 10 ** decimals());
-        _mint(_influencers, 2_666_666_667 * 10 ** decimals());
-        _mint(_marketing, 8_888_888_889 * 10 ** decimals());
+        crowdsale = new Crowdsale(usdt, msg.sender);  
 
-        crowdsale = new Crowdsale(_usdt, msg.sender);
+        _mint(team, 9_777_777_778 * 10 ** decimals());
+        _mint(airdrops, 977_777_778 * 10 ** decimals());
+        _mint(influencers, 2_666_666_667 * 10 ** decimals());
+        _mint(marketing, 8_888_888_889 * 10 ** decimals());
+
         _mint(address(crowdsale), maxTotalSupply - totalSupply());
     }
 
@@ -43,7 +46,7 @@ contract MMNALaunch is ERC20, Pausable, Ownable {
     ) internal override whenNotPaused {
         if (
             !crowdsale.isFinished() &&
-            (from != address(crowdsale) || from != owner())
+            (from != address(crowdsale) && from != owner() && from !=address(0))
         ) {
             revert("Cant transfer before sale ends");
         }
