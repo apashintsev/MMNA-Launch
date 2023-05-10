@@ -3,13 +3,10 @@
 pragma solidity 0.8.19;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Crowdsale} from "./Crowdsale.sol";
 
-//import "hardhat/console.sol";
-
-contract MMNALaunchToken is ERC20, Pausable, Ownable {
+contract MMNALaunchToken is ERC20, Ownable {
     uint256 public immutable maxTotalSupply;
     Crowdsale public crowdsale;
 
@@ -31,19 +28,11 @@ contract MMNALaunchToken is ERC20, Pausable, Ownable {
         _mint(address(crowdsale), maxTotalSupply - totalSupply());
     }
 
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
-    }
-
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 amount
-    ) internal override whenNotPaused {
+    ) internal override {
         if (
             !crowdsale.isFinished() &&
             (from != address(crowdsale) && from != owner() && from !=address(0))
@@ -51,13 +40,5 @@ contract MMNALaunchToken is ERC20, Pausable, Ownable {
             revert("Cant transfer before sale ends");
         }
         super._beforeTokenTransfer(from, to, amount);
-    }
-
-    function _mint(address account, uint256 amount) internal override {
-        require(
-            totalSupply() + amount <= maxTotalSupply,
-            "Max total supply reached!"
-        );
-        super._mint(account, amount);
     }
 }

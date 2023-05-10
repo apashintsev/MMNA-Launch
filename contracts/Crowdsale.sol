@@ -72,36 +72,39 @@ contract Crowdsale is Ownable {
     }
 
     /// @notice Buy token for USDT
-    /// @param amount amount of tokens that user will receive
-    function buy(uint256 amount, bytes32[] calldata merkleProof) external {
-        uint256 tokenAmount = (amount * 10 ** token.decimals()) /
-            rounds[currentRound].price;
-        if (canBuy(msg.sender, merkleProof)) {
-            uint256 usdtAmount = tokenAmount / rounds[currentRound].price;
+    /// @param tokensCount count of full tokens that user will receive
+    function buy(uint256 tokensCount, bytes32[] calldata merkleProof) external {
+        if (canBuy(merkleProof)) {
+            uint256 usdtAmount = tokensCount * rounds[currentRound].price;
             rounds[currentRound].totalUsdt += usdtAmount;
-            usdt.transferFrom(msg.sender, address(this), usdtAmount);
-            token.transfer(msg.sender, tokenAmount);
+            if (
+                usdt.balanceOf(msg.sender) >= usdtAmount &&
+                token.balanceOf(address(this)) >= tokensCount
+            ) {
+                usdt.transferFrom(msg.sender, address(this), usdtAmount);
+                token.transfer(
+                    msg.sender,
+                    tokensCount * 10 ** token.decimals()
+                );
+            }
         } else {
             revert("Buy not allowed");
         }
     }
 
-    function canBuy(
-        address sender,
-        bytes32[] calldata merkleProof
-    ) public view returns (bool) {
+    function canBuy(bytes32[] calldata merkleProof) public view returns (bool) {
         bool isAllowByRoundCondition = block.timestamp <=
             rounds[currentRound].startAt + rounds[currentRound].duration &&
             rounds[currentRound].totalUsdt <= rounds[currentRound].targetUsdt;
         if (currentRound == 1) {
-            return firstRoundWhitelist[sender] && isAllowByRoundCondition;
+            return firstRoundWhitelist[msg.sender] && isAllowByRoundCondition;
         }
-        if (currentRound == 1) {
+        if (currentRound == 2) {
             return
                 MerkleProof.verify(
                     merkleProof,
                     merkleRootForSecondRound,
-                    keccak256(abi.encodePacked(sender))
+                    keccak256(abi.encodePacked(msg.sender))
                 ) && isAllowByRoundCondition;
         }
         return isAllowByRoundCondition;
@@ -116,6 +119,8 @@ contract Crowdsale is Ownable {
         ) {
             currentRound += 1;
             rounds[currentRound].startAt = block.timestamp;
+        } else {
+            revert("Round can not be closed yet");
         }
     }
 
@@ -133,5 +138,11 @@ contract Crowdsale is Ownable {
         return
             currentRound > 3 &&
             block.timestamp >= rounds[3].startAt + rounds[3].duration + 6 hours;
+    }
+
+    function getRoundData(
+        uint256 roundNumber
+    ) external view returns (RoundData memory) {
+        return rounds[roundNumber];
     }
 }

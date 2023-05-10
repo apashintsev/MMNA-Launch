@@ -44,8 +44,9 @@ const config: HardhatUserConfig = {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
     coinmarketcap: process.env.COINMARKET_CAP_KEY,
-    token: "BNB",
-    gasPriceApi: "https://api.bscscan.com/api?module=proxy&action=eth_gasPrice",
+    token: "MATIC",
+    gasPriceApi:
+      "https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice",
   },
   etherscan: {
     apiKey: process.env.BSCSCAN_API_KEY,
