@@ -49,7 +49,7 @@ const config: HardhatUserConfig = {
       "https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice",
   },
   etherscan: {
-    apiKey: process.env.BSCSCAN_API_KEY,
+    apiKey: process.env.SCAN_API_KEY,
   },
 };
 
