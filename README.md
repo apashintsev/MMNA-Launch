@@ -1,4 +1,4 @@
-# PepeElonMusk Token
+# MMNA Launch Token & Crowdsale Token
 
 1. Чтобы установить зависимости нужно выполнить в терминале команду
    `yarn install`
