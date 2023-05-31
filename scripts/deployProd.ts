@@ -11,16 +11,16 @@ function sleep(ms: number) {
 
 async function main() {
   //Деплой токена
-  //деплой скриптом npx hardhat run --network mumbai  .\scripts\deploy.ts
+  //деплой скриптом npx hardhat run --network polygon  .\scripts\deployProd.ts
   const accounts = await ethers.getSigners();
   const deployer = accounts.find(
     (x) => x.address == process.env.DEPLOYER_ADDRESS
   );
 
   let usdtAddress = ethers.constants.AddressZero;
-  const usdt = await new USDT__factory(deployer).deploy();
-  await usdt.deployed();
-  usdtAddress = usdt.address;
+  if (process.env.ADDRESS_USDT) {
+    usdtAddress = process.env.ADDRESS_USDT!;
+  }
 
   const token = await new MMNALaunchToken__factory(deployer).deploy(
     process.env.ADDRESS_TEAM!,
@@ -72,7 +72,6 @@ async function main() {
   } catch (e) {
     //console.log(e);
   }
-  console.log("USDT deplyed to: " + usdtAddress);
   console.log("All deployed.");
 }
 

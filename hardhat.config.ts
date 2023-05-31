@@ -3,12 +3,6 @@ import "@nomicfoundation/hardhat-toolbox";
 import "dotenv/config";
 import { mnemonic } from "./secrets.json";
 
-/*
-import "./tasks/sendTokens";
-import "./tasks/addLiquidity";
-import "./tasks/setLimits";
-import "./tasks/renounceOwnership";
-*/
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.19",
@@ -20,6 +14,11 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    polygon: {
+      url: "https://polygon-rpc.com/",
+      chainId:137,
+      accounts: { mnemonic: mnemonic },
+    },
     mumbai: {
       url: "https://rpc-mumbai.maticvigil.com",
       accounts: { mnemonic: mnemonic },
