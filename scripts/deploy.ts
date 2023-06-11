@@ -31,8 +31,6 @@ async function main() {
   );
   await token.deployed();
 
-  console.log("MMNALaunchToken Token deployed to:", token.address);
-
   await sleep(5 * 1000);
 
   try {
@@ -51,7 +49,6 @@ async function main() {
     //console.log(e);
   }
   const crowdsaleAddress = await token.crowdsale();
-  console.log("MMNALaunch Crowdsale deployed to:", crowdsaleAddress);
 
   try {
     await hre.run("verify:verify", {
@@ -72,6 +69,8 @@ async function main() {
   } catch (e) {
     //console.log(e);
   }
+  console.log("MMNALaunchToken Token deployed to:", token.address);
+  console.log("MMNALaunch Crowdsale deployed to:", crowdsaleAddress);
   console.log("USDT deplyed to: " + usdtAddress);
   console.log("All deployed.");
 }

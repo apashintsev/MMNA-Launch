@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.17;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -111,7 +111,7 @@ contract Crowdsale is Ownable {
     }
 
     /// @notice Switches round number if condition is passed; sets next round start time
-    function switchRound() external onlyOwner {
+    function switchRound() external {
         if (
             block.timestamp >
             rounds[currentRound].startAt + rounds[currentRound].duration ||

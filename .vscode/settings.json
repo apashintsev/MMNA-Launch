@@ -1,3 +1,5 @@
 {
-  "solidity.defaultCompiler": "embedded"
+  "solidity.compileUsingRemoteVersion": "v0.8.20+commit.a1b79de6",
+  "solidity.compileUsingLocalVersion": "c:\\Source\\Repos\\Smartcontracts\\MMNA Launch\\soljson-v0.8.19+commit.7dd6d404.js",
+  "solidity.defaultCompiler": "localFile"
 }
