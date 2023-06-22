@@ -27,11 +27,12 @@ async function main() {
     process.env.ADDRESS_AIRDROPS!,
     process.env.ADDRESS_MARKETING!,
     process.env.ADDRESS_INFLUENCERS!,
-    usdtAddress
+    usdtAddress,
+    process.env.ROUND_SWITCHER_ADDRESS!
   );
   await token.deployed();
 
-  await sleep(5 * 1000);
+  await sleep(25 * 1000);
 
   try {
     await hre.run("verify:verify", {
@@ -43,6 +44,7 @@ async function main() {
         process.env.ADDRESS_MARKETING!,
         process.env.ADDRESS_INFLUENCERS!,
         usdtAddress,
+        process.env.ROUND_SWITCHER_ADDRESS!,
       ],
     });
   } catch (e) {

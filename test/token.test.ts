@@ -4,6 +4,7 @@ import { ethers } from "hardhat";
 import {
   Crowdsale__factory,
   MMNALaunchToken__factory,
+  PayReceiver__factory,
   USDT__factory,
 } from "../typechain-types/factories/contracts";
 import { USDT } from "../typechain-types/contracts/USDT";
@@ -203,6 +204,7 @@ describe("Tests", () => {
     await txSetRoot.wait();
 
     const proof2 = merkleTree.getHexProof(keccak256(user2.address));
+    console.log({proof2})
     expect(await cs.connect(user2).canBuy(proof2)).eq(true);
     const balanceBefore = ethers.utils.formatUnits(
       (await usdt.balanceOf(user2.address)).toString(),

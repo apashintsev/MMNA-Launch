@@ -27,13 +27,14 @@ async function main() {
     process.env.ADDRESS_AIRDROPS!,
     process.env.ADDRESS_MARKETING!,
     process.env.ADDRESS_INFLUENCERS!,
-    usdtAddress
+    usdtAddress,
+    process.env.ROUND_SWITCHER_ADDRESS!
   );
   await token.deployed();
 
   console.log("MMNALaunchToken Token deployed to:", token.address);
 
-  await sleep(5 * 1000);
+  await sleep(35 * 1000);
 
   try {
     await hre.run("verify:verify", {
@@ -45,6 +46,7 @@ async function main() {
         process.env.ADDRESS_MARKETING!,
         process.env.ADDRESS_INFLUENCERS!,
         usdtAddress,
+        process.env.ROUND_SWITCHER_ADDRESS!,
       ],
     });
   } catch (e) {

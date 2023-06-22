@@ -14,6 +14,7 @@ contract Crowdsale is Ownable {
     ERC20 public immutable token;
     ERC20 public immutable usdt;
     uint256 public currentRound;
+    address public roundSwitcher;
 
     struct RoundData {
         uint256 price;
@@ -25,13 +26,25 @@ contract Crowdsale is Ownable {
 
     //k-round number; v- price in usdt
     mapping(uint256 => RoundData) public rounds;
-    mapping(address => bool) public firstRoundWhitelist;
+    //mapping(address => bool) public firstRoundWhitelist;
+    bytes32 public merkleRootForFirstRound;
     bytes32 public merkleRootForSecondRound;
 
-    constructor(address _usdt, address _operator) {
+    modifier onlyOwnerOrSwitcher() {
+        require(msg.sender == owner() || msg.sender == roundSwitcher);
+        _;
+    }
+
+    event CrowdsaleStarted();
+    event TokenBuyed(address indexed _from, uint256 amount);
+    event RoundFinished();
+    event CrowdsaleFinished();
+
+    constructor(address _usdt, address _operator, address _roundSwitcher) {
         usdt = ERC20(_usdt);
         token = ERC20(msg.sender);
         transferOwnership(_operator);
+        roundSwitcher = _roundSwitcher;
     }
 
     function init(
@@ -39,6 +52,7 @@ contract Crowdsale is Ownable {
         uint256 secondRoundPrice,
         uint256 thirdRoundPrice
     ) external onlyOwner {
+        require(currentRound == 0);
         rounds[1] = RoundData(
             firstRoundPrice,
             block.timestamp,
@@ -61,10 +75,11 @@ contract Crowdsale is Ownable {
             0
         );
         currentRound = 1;
+        emit CrowdsaleStarted();
     }
 
-    function addToFirstRoundWhitelist(address user) external {
-        firstRoundWhitelist[user] = true;
+    function setMerkleRootForFirstRound(bytes32 root) external onlyOwner {
+        merkleRootForFirstRound = root;
     }
 
     function setMerkleRootForSecondRound(bytes32 root) external onlyOwner {
@@ -74,22 +89,19 @@ contract Crowdsale is Ownable {
     /// @notice Buy token for USDT
     /// @param tokensCount count of full tokens that user will receive
     function buy(uint256 tokensCount, bytes32[] calldata merkleProof) external {
-        if (canBuy(merkleProof)) {
-            uint256 usdtAmount = tokensCount * rounds[currentRound].price;
-            rounds[currentRound].totalUsdt += usdtAmount;
-            if (
-                usdt.balanceOf(msg.sender) >= usdtAmount &&
-                token.balanceOf(address(this)) >= tokensCount
-            ) {
-                usdt.transferFrom(msg.sender, address(this), usdtAmount);
-                token.transfer(
-                    msg.sender,
-                    tokensCount * 10 ** token.decimals()
-                );
-            }
-        } else {
+        if (!canBuy(merkleProof)) {
             revert("Buy not allowed");
         }
+        uint256 usdtAmount = tokensCount * rounds[currentRound].price;
+        rounds[currentRound].totalUsdt += usdtAmount;
+        if (
+            usdt.balanceOf(msg.sender) >= usdtAmount &&
+            token.balanceOf(address(this)) >= tokensCount
+        ) {
+            usdt.transferFrom(msg.sender, address(this), usdtAmount);
+            token.transfer(msg.sender, tokensCount * 10 ** token.decimals());
+        }
+        emit TokenBuyed(msg.sender, tokensCount);
     }
 
     function canBuy(bytes32[] calldata merkleProof) public view returns (bool) {
@@ -97,31 +109,66 @@ contract Crowdsale is Ownable {
             rounds[currentRound].startAt + rounds[currentRound].duration &&
             rounds[currentRound].totalUsdt <= rounds[currentRound].targetUsdt;
         if (currentRound == 1) {
-            return firstRoundWhitelist[msg.sender] && isAllowByRoundCondition;
+            return
+                isInIwhitelist(msg.sender, merkleProof) &&
+                isAllowByRoundCondition;
         }
         if (currentRound == 2) {
             return
-                MerkleProof.verify(
-                    merkleProof,
-                    merkleRootForSecondRound,
-                    keccak256(abi.encodePacked(msg.sender))
-                ) && isAllowByRoundCondition;
+                isInIIwhitelist(msg.sender, merkleProof) &&
+                isAllowByRoundCondition;
         }
         return isAllowByRoundCondition;
     }
 
+    function isInIwhitelist(
+        address user,
+        bytes32[] calldata merkleProof
+    ) public view returns (bool) {
+        return
+            MerkleProof.verify(
+                merkleProof,
+                merkleRootForFirstRound,
+                keccak256(abi.encodePacked(user))
+            );
+    }
+
+    function isInIIwhitelist(
+        address user,
+        bytes32[] calldata merkleProof
+    ) public view returns (bool) {
+        return
+            MerkleProof.verify(
+                merkleProof,
+                merkleRootForSecondRound,
+                keccak256(abi.encodePacked(user))
+            );
+    }
+
     /// @notice Switches round number if condition is passed; sets next round start time
-    function switchRound() external {
-        if (
-            block.timestamp >
-            rounds[currentRound].startAt + rounds[currentRound].duration ||
-            rounds[currentRound].totalUsdt >= rounds[currentRound].targetUsdt
-        ) {
-            currentRound += 1;
-            rounds[currentRound].startAt = block.timestamp;
+    function switchRound() onlyOwnerOrSwitcher external {
+        if (isNeedToSwitchRound()) {
+            _switchRound();
         } else {
             revert("Round can not be closed yet");
         }
+    }
+
+    function _switchRound() private {
+        currentRound += 1;
+        rounds[currentRound].startAt = block.timestamp;
+        emit RoundFinished();
+        if (currentRound == 4) {
+            emit CrowdsaleFinished();
+        }
+    }
+
+    /// @notice Returns true if round ended
+    function isNeedToSwitchRound() public view returns (bool) {
+        return
+            block.timestamp >
+            rounds[currentRound].startAt + rounds[currentRound].duration ||
+            rounds[currentRound].totalUsdt >= rounds[currentRound].targetUsdt;
     }
 
     /// @notice Collects to owner all tokens that was not sold on Crowdsale
