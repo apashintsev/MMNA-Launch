@@ -32,7 +32,7 @@ async function main() {
   );
   await token.deployed();
 
-  await sleep(25 * 1000);
+  await sleep(35 * 1000);
 
   try {
     await hre.run("verify:verify", {

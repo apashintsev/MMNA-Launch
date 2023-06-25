@@ -146,7 +146,7 @@ contract Crowdsale is Ownable {
     }
 
     /// @notice Switches round number if condition is passed; sets next round start time
-    function switchRound() onlyOwnerOrSwitcher external {
+    function switchRound() external onlyOwnerOrSwitcher {
         if (isNeedToSwitchRound()) {
             _switchRound();
         } else {
@@ -165,6 +165,7 @@ contract Crowdsale is Ownable {
 
     /// @notice Returns true if round ended
     function isNeedToSwitchRound() public view returns (bool) {
+        if (currentRound == 0) return false;
         return
             block.timestamp >
             rounds[currentRound].startAt + rounds[currentRound].duration ||
